@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import numpy as np
+
+
+# In[2]:
+
+
+a = np.array([[1, 6], 
+              [2, 8], 
+              [3, 11],
+              [3, 10],
+              [1, 7]])
+a
+
+
+# In[8]:
+
+
+mean_a=a.mean(axis = 0)
+
+mean_a
+
+
+# In[9]:
+
+
+a_centered=np.subtract(a, mean_a)
+
+a_centered
+
+
+# In[10]:
+
+
+c = a_centered[:, 0].copy()
+
+d = a_centered[:, 1].copy()
+
+a_centered_sp=np.dot(c,d)
+a_centered_sp
+
+
+# In[12]:
+
+
+N=a.shape[0]
+N
+
+
+# In[13]:
+
+
+covar=a_centered_sp/(N-1)
+
+covar
+
+
+# In[6]:
+
+
+a_tr = np.transpose(a)
+a_tr
+cov_tr = np.cov(a_tr)
+covar2 = cov_tr[0, 1].copy()
+covar2
+
