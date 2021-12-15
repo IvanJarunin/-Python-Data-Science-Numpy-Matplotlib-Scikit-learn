@@ -4,56 +4,58 @@
 # In[ ]:
 
 
-#Импортируйте библиотеки pandas и numpy.
+#1)Импортируйте библиотеки pandas и numpy.
 
 
-# In[1]:
+# In[25]:
 
 
+import warnings
+
+warnings.filterwarnings('ignore')
 import numpy as np
 import pandas as pd
 
 
-# In[13]:
+# In[24]:
 
 
 #Загрузите "Boston House Prices dataset" из встроенных наборов данных библиотеки sklearn.
 #Создайте датафреймы X и y из этих данных.
 
 
-# In[7]:
+# In[36]:
 
 
 from sklearn.datasets import load_boston
 boston = load_boston()
+data = boston["data"]
+feature_names = boston["feature_names"]
+target = boston["target"]
+
+X = pd.DataFrame(data, columns=feature_names)
+X.info()
+
+
+# In[39]:
+
+
+y = pd.DataFrame(target, columns=["price"])
+y.info()
 
 
 # In[ ]:
 
 
 #Разбейте эти датафреймы на тренировочные (X_train, y_train) и тестовые (X_test, y_test) с помощью функции train_test_split так,
-#чтобы размер тестовой выборки
+#чтобы размер тестовой выборки составлял 30% от всех данных, при этом аргумент random_state должен быть равен 42.
 
 
-# In[10]:
-
-
-X = pd.DataFrame(boston.data, columns=boston.feature_names)
-y = boston.target
-
-
-# In[ ]:
-
-
-#составлял 30% от всех данных, при этом аргумент random_state должен быть равен 42.
-
-
-# In[11]:
+# In[41]:
 
 
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-X_train.shape, X_test.shape, y_train.shape, y_test.shape
 
 
 # In[ ]:
@@ -75,23 +77,28 @@ lr = LinearRegression()
 #Обучите модель на тренировочных данных (используйте все признаки) и сделайте предсказание на тестовых.
 
 
-# In[14]:
+# In[42]:
 
 
 lr.fit(X_train, y_train)
 
 
-# In[20]:
+# In[43]:
 
 
 y_pred = lr.predict(X_test)
 y_pred.shape
 
 
-# In[21]:
+# In[44]:
 
 
+check_test = pd.DataFrame({
+    "y_test": y_test["price"],
+    "y_pred": y_pred.flatten(),
+})
 
+check_test.head(10)
 
 
 # In[ ]:
@@ -100,4 +107,427 @@ y_pred.shape
 #Вычислите R2 полученных предказаний с помощью r2_score из модуля sklearn.metrics.
 
 
-# In[23]:
+# In[45]:
+
+
+from sklearn.metrics import r2_score
+
+
+# In[46]:
+
+
+check_test["error"] = check_test["y_pred"] - check_test["y_test"]
+check_test.head()
+
+
+# In[49]:
+
+
+r2_score(check_test["y_pred"], check_test["y_test"])
+
+
+# In[50]:
+
+
+# 2) Создайте модель под названием model с помощью RandomForestRegressor из модуля sklearn.ensemble
+
+
+# In[52]:
+
+
+from sklearn.ensemble import RandomForestRegressor
+
+
+# In[ ]:
+
+
+#Сделайте агрумент n_estimators равным 1000, max_depth должен быть равен 12 и random_state сделайте равным 42.
+
+
+# In[64]:
+
+
+model = RandomForestRegressor(max_depth=12, random_state=42, n_estimators=1000)
+
+
+# In[ ]:
+
+
+#Обучите модель на тренировочных данных аналогично тому, как вы обучали модель LinearRegression,
+#но при этом в метод fit вместо датафрейма y_train поставьте y_train.values[:, 0],
+#чтобы получить из датафрейма одномерный массив Numpy,
+#так как для класса RandomForestRegressor в данном методе для аргумента y предпочтительно применение массивов вместо датафрейма.
+
+
+# In[65]:
+
+
+model.fit(X_train, y_train.values[:, 0])
+
+
+# In[ ]:
+
+
+#Сделайте предсказание на тестовых данных и посчитайте R2. Сравните с результатом из предыдущего задания.
+
+
+# In[66]:
+
+
+y_pred = model.predict(X_test)
+y_pred.shape
+
+
+# In[67]:
+
+
+check_test = pd.DataFrame({
+    "y_test": y_test["price"],
+    "y_pred": y_pred.flatten(),
+})
+
+check_test.head(10)
+
+
+# In[68]:
+
+
+r2_score(check_test["y_pred"], check_test["y_test"])
+
+
+# In[69]:
+
+
+#Напишите в комментариях к коду, какая модель в данном случае работает лучше.
+#Ответ - модель RandomForestRegressor отработала лучше.
+
+
+# In[ ]:
+
+
+#3) Вызовите документацию для класса RandomForestRegressor,
+#найдите информацию об атрибуте feature_importances_.
+#С помощью этого атрибута найдите сумму всех показателей важности,
+#установите, какие два признака показывают наибольшую важность.
+
+
+# In[70]:
+
+
+get_ipython().run_line_magic('pinfo', 'RandomForestRegressor')
+
+
+# In[71]:
+
+
+model.feature_importances_
+
+
+# In[73]:
+
+
+feature_importances = pd.DataFrame(zip(X_train.columns, 
+                                       model.feature_importances_), 
+                                   columns=['feature_name', 'importance'])
+
+feature_importances.sort_values(by='importance', ascending=False, inplace=True)
+
+
+# In[74]:
+
+
+feature_importances.head(2)
+
+
+# In[ ]:
+
+
+# 4)В этом задании мы будем работать с датасетом, с которым мы уже знакомы по домашнему заданию по библиотеке Matplotlib,
+#это датасет Credit Card Fraud Detection.Для этого датасета мы будем решать задачу классификации - будем определять,
+#какие из транзакциции по кредитной карте являются мошенническими.Данный датасет сильно несбалансирован (так как случаи 
+#мошенничества относительно редки),так что применение метрики accuracy не принесет пользы и не поможет выбрать лучшую модель.
+#Мы будем вычислять AUC, то есть площадь под кривой ROC.
+#Импортируйте из соответствующих модулей RandomForestClassifier, GridSearchCV и train_test_split.
+#Загрузите датасет creditcard.csv и создайте датафрейм df.
+#С помощью метода value_counts с аргументом normalize=True убедитесь в том, что выборка несбалансирована. Используя метод info, проверьте, все ли столбцы содержат числовые данные и нет ли в них пропусков.Примените следующую настройку, чтобы можно было просматривать все столбцы датафрейма:
+#pd.options.display.max_columns = 100.
+#Просмотрите первые 10 строк датафрейма df.
+#Создайте датафрейм X из датафрейма df, исключив столбец Class.
+#Создайте объект Series под названием y из столбца Class.
+#Разбейте X и y на тренировочный и тестовый наборы данных при помощи функции train_test_split, используя аргументы: test_size=0.3, random_state=100, stratify=y.
+#У вас должны получиться объекты X_train, X_test, y_train и y_test.
+#Просмотрите информацию о их форме.
+#Для поиска по сетке параметров задайте такие параметры:
+#parameters = [{'n_estimators': [10, 15],
+#'max_features': np.arange(3, 5),
+#'max_depth': np.arange(4, 7)}]
+#Создайте модель GridSearchCV со следующими аргументами:
+#estimator=RandomForestClassifier(random_state=100),
+#param_grid=parameters,
+#scoring='roc_auc',
+#cv=3.
+#Обучите модель на тренировочном наборе данных (может занять несколько минут).
+#Просмотрите параметры лучшей модели с помощью атрибута best_params_.
+#Предскажите вероятности классов с помощью полученнной модели и метода predict_proba.
+#Из полученного результата (массив Numpy) выберите столбец с индексом 1 (вероятность класса 1) и запишите в массив y_pred_proba. Из модуля sklearn.metrics импортируйте метрику roc_auc_score.
+#Вычислите AUC на тестовых данных и сравните с результатом,полученным на тренировочных данных, используя в качестве аргументов массивы y_test и y_pred_proba.
+
+
+# In[75]:
+
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+
+
+# In[76]:
+
+
+df = pd.read_csv('creditcard.csv')
+df.head()
+
+
+# In[81]:
+
+
+df.value_counts(normalize=True)
+
+
+# In[82]:
+
+
+df.info()
+
+
+# In[83]:
+
+
+pd.options.display.max_columns = 100
+
+
+# In[84]:
+
+
+df.head(10)
+
+
+# In[85]:
+
+
+X = df.drop("Class", axis=1)
+X.head()
+
+
+# In[92]:
+
+
+y = df["Class"]
+y.head()
+
+
+# In[93]:
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=100, stratify=y)
+
+
+# In[95]:
+
+
+X_train.shape, X_test.shape, y_train.shape, y_test.shape
+
+
+# In[96]:
+
+
+parameters = [{'n_estimators': [10, 15],
+'max_features': np.arange(3, 5),
+'max_depth': np.arange(4, 7)}]
+
+
+# In[97]:
+
+
+model = GridSearchCV(estimator=RandomForestClassifier(random_state=100),param_grid=parameters, scoring='roc_auc', cv=3)
+
+
+# In[98]:
+
+
+model.fit(X_train, y_train)
+
+
+# In[99]:
+
+
+model.best_params_
+
+
+# In[102]:
+
+
+predictions = model.predict_proba(X_test)
+predictions
+
+
+# In[103]:
+
+
+y_pred_proba = predictions[:, 1]
+y_pred_proba
+
+
+# In[105]:
+
+
+from sklearn.metrics import roc_auc_score
+
+
+# In[107]:
+
+
+roc_auc_score(y_test, y_pred_proba)
+
+
+# In[117]:
+
+
+# 4)Дополнительные задания:
+#1). Загрузите датасет Wine из встроенных датасетов sklearn.datasets с помощью функции load_wine в
+#переменную data.
+#2). Полученный датасет не является датафреймом. Это структура данных, имеющая ключи
+#аналогично словарю. Просмотрите тип данных этой структуры данных и создайте список data_keys,
+#содержащий ее ключи.
+#3). Просмотрите данные, описание и названия признаков в датасете. Описание нужно вывести в виде
+#привычного, аккуратно оформленного текста, без обозначений переноса строки, но с самими
+#переносами и т.д.4). Сколько классов содержит целевая переменная датасета? Выве
+#дите названия классов.
+#5). На основе данных датасета (они содержатся в двумерном массиве Numpy) и названий признаков
+#создайте датафрейм под названием X.
+#6). Выясните размер датафрейма X и установите, имеются ли в нем пропущенные значения.
+#7). Добавьте в датафрейм поле с классами вин в виде чисел, имеющих тип данных numpy.int64.
+#Название поля - 'target'.
+#8). Постройте матрицу корреляций для всех полей X. Дайте полученному датафрейму название
+#X_corr.
+#9). Создайте список high_corr из признаков, корреляция которых с полем target по абсолютному
+#значению превышает 0.5 (причем, само поле target не должно входить в этот список).
+#10). Удалите из датафрейма X поле с целевой переменной. Для всех признаков, названия которых
+#содержатся в списке high_corr, вычислите квадрат их значений и добавьте в датафрейм X
+#соответствующие поля с суффиксом '_2', добавленного к первоначальному названию признака.
+#Итоговый датафрейм должен содержать все поля, которые, были в нем изначально, а также поля с
+#признаками из списка high_corr, возведенными в квадрат. Выведите описание полей датафрейма X с
+#помощью метода describe.
+
+
+# In[115]:
+
+
+from sklearn.datasets import load_wine
+data = load_wine()
+
+
+# In[118]:
+
+
+data.keys()
+
+
+# In[121]:
+
+
+data_keys = data['feature_names']
+data_keys
+
+
+# In[125]:
+
+
+data.data
+
+
+# In[124]:
+
+
+for line in data.DESCR.split('\n'):
+ print(line)
+
+
+# In[131]:
+
+
+np.unique(data["target"])
+
+
+# In[132]:
+
+
+data.target_names
+
+
+# In[138]:
+
+
+X = pd.DataFrame(data.data, columns=feature_names)
+X.head()
+
+
+# In[139]:
+
+
+X.info()
+
+
+# In[140]:
+
+
+X.shape
+
+
+# In[144]:
+
+
+X["target"]=data["target"].astype(np.int64)
+X.info()
+
+
+# In[151]:
+
+
+X_corr=X.corr()
+X_corr
+
+
+# In[162]:
+
+
+high_corr = X_corr.target[np.abs(X_corr.target)>0.5].drop("target", axis=0)
+high_corr = list(high_corr.index)
+high_corr
+
+
+# In[166]:
+
+
+X = X.drop("target", axis=1)
+X.info
+
+
+# In[167]:
+
+
+for i in high_corr:
+ X[i+"_2"]=X[i]**2
+X.head()
+
+
+# In[168]:
+
+
+X.describe()
+
+
+# In[ ]:
+
+
+
