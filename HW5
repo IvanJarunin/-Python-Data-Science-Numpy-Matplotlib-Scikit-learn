@@ -1,0 +1,217 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
+#1) Импортируйте библиотеки pandas, numpy и matplotlib.
+
+
+# In[17]:
+
+
+import warnings
+
+warnings.filterwarnings('ignore')
+import numpy as np
+import pandas as pd
+
+
+# In[ ]:
+
+
+# Загрузите "Boston House Prices dataset" из встроенных наборов данных библиотеки sklearn.
+
+
+# In[18]:
+
+
+from sklearn.datasets import load_boston
+boston = load_boston()
+
+
+# In[ ]:
+
+
+# Создайте датафреймы X и y из этих данных.
+
+
+# In[19]:
+
+
+data = boston["data"]
+feature_names = boston["feature_names"]
+target = boston["target"]
+
+X = pd.DataFrame(data, columns=feature_names)
+X.info()
+
+
+# In[20]:
+
+
+y = pd.DataFrame(target, columns=["price"])
+y.info()
+
+
+# In[ ]:
+
+
+# Разбейте эти датафреймы на тренировочные (X_train, y_train) и тестовые (X_test, y_test)
+# с помощью функции train_test_split так, чтобы размер тестовой выборки
+# составлял 20% от всех данных, при этом аргумент random_state должен быть равен 42.
+
+
+# In[21]:
+
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+# In[ ]:
+
+
+# Масштабируйте данные с помощью StandardScaler.
+
+
+# In[22]:
+
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+
+X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
+X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
+
+
+# In[ ]:
+
+
+# Постройте модель TSNE на тренировочный данных с параметрами:
+# n_components=2, learning_rate=250, random_state=42.
+
+
+# In[23]:
+
+
+from sklearn.manifold import TSNE
+
+
+# In[24]:
+
+
+tsne = TSNE(n_components=2, learning_rate=250, random_state=42)
+
+X_train_tsne = tsne.fit_transform(X_train_scaled)
+
+print('До:\t{}'.format(X_train_scaled.shape))
+print('После:\t{}'.format(X_train_tsne.shape))
+
+
+# In[ ]:
+
+
+# Постройте диаграмму рассеяния на этих данных.
+
+
+# In[25]:
+
+
+import matplotlib.pyplot as plt
+
+
+# In[26]:
+
+
+plt.scatter(X_train_tsne[:, 0], X_train_tsne[:, 1])
+
+plt.show()
+
+
+# In[ ]:
+
+
+#2) С помощью KMeans разбейте данные из тренировочного набора на 3 кластера,
+# используйте все признаки из датафрейма X_train.
+# Параметр max_iter должен быть равен 100, random_state сделайте равным 42.
+
+
+# In[28]:
+
+
+from sklearn.cluster import KMeans
+
+
+# In[35]:
+
+
+kmeans = KMeans(n_clusters=3, max_iter=100, random_state=42)
+
+labels_train = kmeans.fit_predict(X_train_scaled)
+
+
+# In[ ]:
+
+
+# Постройте еще раз диаграмму рассеяния на данных, полученных с помощью TSNE,
+# и раскрасьте точки из разных кластеров разными цветами.
+
+
+# In[32]:
+
+
+plt.scatter(X_train_tsne[:, 0], X_train_tsne[:, 1], c=labels_train)
+
+plt.show()
+
+
+# In[ ]:
+
+
+# Вычислите средние значения price и CRIM в разных кластерах.
+
+
+# In[51]:
+
+
+labels_test = kmeans.predict(X_test_scaled)
+print('Кластер 0: {}'.format(y_train[labels_train == 0].mean()))
+print('Кластер 1: {}'.format(y_train[labels_train == 1].mean()))
+print('Кластер 2: {}'.format(y_train[labels_train == 2].mean()))
+
+print('Кластер 0: {}'.format(X_train.loc[labels_train == 0, 'CRIM'].mean()))
+print('Кластер 1: {}'.format(X_train.loc[labels_train == 1, 'CRIM'].mean()))
+print('Кластер 2: {}'.format(X_train.loc[labels_train == 2, 'CRIM'].mean()))
+
+
+# In[ ]:
+
+
+# 4) Примените модель KMeans, построенную в предыдущем задании,
+# к данным из тестового набора.
+
+
+# In[56]:
+
+
+labels_test = kmeans.predict(X_test_scaled)
+
+
+# In[ ]:
+
+
+# Вычислите средние значения price и CRIM в разных кластерах на тестовых данных.
+
+
+# In[59]:
+
+
+print('Кластер 0: {}'.format(y_test[labels_test == 0].mean()))
+print('Кластер 1: {}'.format(y_test[labels_test == 1].mean()))
+print('Кластер 2: {}'.format(y_test[labels_test == 2].mean()))
+
+print('Кластер 0: {}'.format(X_test.loc[labels_test == 0, 'CRIM'].mean()))
+print('Кластер 1: {}'.format(X_test.loc[labels_test == 1, 'CRIM'].mean()))
+print('Кластер 2: {}'.format(X_test.loc[labels_test == 2, 'CRIM'].mean()))
+
